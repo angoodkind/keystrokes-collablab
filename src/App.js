@@ -4,6 +4,8 @@ import './App.css';
 import firebase from 'firebase/app';
 import 'firebase/database';
 
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyClIAFsYniP3urgKonGG107ZvNj4k6XO9Q",
   authDomain: "keystrokes-collablab.firebaseapp.com",
@@ -16,15 +18,17 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const socket = openSocket('http://localhost:8080', {transports: ['websocket']});
+const socket = openSocket('http://keystrokes-collablab.herokuapp.com', {transports: ['websocket']});
+
+// Important
 window.onbeforeunload = function () {
   return '';
 }
 
 const start = Date.now();
 
-
 function App() {
+  document.cookie = 'True';
 
   const prompts = [
     `[Subject1] has had a long week at work, 
@@ -40,7 +44,8 @@ function App() {
       `Finished`
   ]
   
-  const [subject, setSubject] = useState(0);
+  const [subject, setSubject] = useState(null);
+  const [room, setRoom] = useState();
   const [message, setMessage] = useState("");
   const [prompt, setPrompt] = useState(1);
   const [experiment, setExperiment] = useState(null);
@@ -53,7 +58,6 @@ function App() {
   //       alert('5 seconds remaining!');
   //     }
   //   }, 5000)
-
   //   const timer = setTimeout(() => {
   //     if (prompt < 4) {
   //       alert(`Moving on to the next prompt!`);
@@ -70,16 +74,14 @@ function App() {
   // Set up the socket in a useEffect with nothing in the dependency array,
   // to avoid setting up multiple connections.
   useEffect(() => {
-
-    socket.once('connection', (index) => {
+    socket.once('connection', (data) => {
       console.log("My ID:", socket.id);
-      console.log("my index:", index);
-      console.log(`I'm connected with the back-end`);
-      setSubject(index);
+      console.log("my index:", data.count);
+      console.log(`I'm connected with the back-end in room ${data.room}`);
+      setSubject(data.count + 1);
+      setRoom(data.room);
     });
-
     window.onkeydown = function (e) {
-      // console.log("key down:", e.code, Date.now());
       const info = {
         "keyupordown": "down",
         "eCode": e.code, 
@@ -89,9 +91,9 @@ function App() {
         "existingTextMessage": message,
         "visibleTextKeystroke": null
       }
-
-      firebase.database().ref('testing/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
-
+      if (experiment != null) {
+        firebase.database().ref('testing/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
+      }
     }
     
     window.onkeyup = function (e) {
@@ -104,11 +106,10 @@ function App() {
         "existingTextMessage": message,
         "visibleTextKeystroke": (e.key.length == 1 || e.code == "Backspace" ? e.key : null),
       }
-
-      firebase.database().ref('testing/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
-
+      if (experiment != null) {
+        firebase.database().ref('testing/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
+      }
     }
-   
   },[message])
 
   useEffect(()=> {
@@ -119,11 +120,13 @@ function App() {
 
   useEffect(()=> {
     if (subject == 1) {
-      socket.emit('setNode', firebase.database().ref('testing').push().key);
-    } else if (subject == 2) {
-      socket.emit('getNode');
+      // console.log("This is my firebase node: ", myKey);
+      let myKey = firebase.database().ref('testing').push().key;
+      socket.emit('setNode', {signal: myKey, room: room });
+    } else {
+      socket.emit('getNode', {room: room});
     }
-  },[subject])
+  },[subject, room])
 
   useEffect(() => {
     socket.on("message", (result) => {
@@ -155,7 +158,7 @@ function App() {
     if (message != "") {
       setSentTime(Date.now());
       //
-      socket.emit("message", {user: subject, data: message});
+      socket.emit("message", {signal: {user: subject, data: message}, room: room});
     } else {
       console.log("empty message:", Date.now())
     }
@@ -170,6 +173,7 @@ function App() {
 
   useEffect(() => {
     socket.on('getNode', (data) => {
+      console.log("THIS ACTUALLY HAPPENED");
       console.log("getNode", data);
       setExperiment(data);
     })
