@@ -18,7 +18,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const socket = openSocket('http://keystrokes-collablab.herokuapp.com', {transports: ['websocket']});
+const socket = openSocket('http://localhost:8080', {transports: ['websocket']});
 
 // Important
 window.onbeforeunload = function () {
