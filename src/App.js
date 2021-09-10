@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import openSocket from 'socket.io-client';
 import './App.css';
 import firebase from 'firebase/app';
+
 import 'firebase/database';
-
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyClIAFsYniP3urgKonGG107ZvNj4k6XO9Q",
@@ -18,12 +17,12 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const socket = openSocket('http://localhost:8080', {transports: ['websocket']});
+const socket = openSocket('http://keystrokes-collablab.herokuapp.com', {transports: ['websocket'], rejectUnauthorized: false});
 
 // Important
-window.onbeforeunload = function () {
-  return '';
-}
+// window.onbeforeunload = function () {
+//   return '';
+// }
 
 const start = Date.now();
 
@@ -52,28 +51,30 @@ function App() {
   const [sentTime, setSentTime] = useState(Date.now());
   const [sends, setSends] = useState(null);
 
-  // useEffect(()=> {
-  //   const warning = setTimeout(() => {
-  //     if (prompt < 4) {
-  //       alert('5 seconds remaining!');
-  //     }
-  //   }, 5000)
-  //   const timer = setTimeout(() => {
-  //     if (prompt < 4) {
-  //       alert(`Moving on to the next prompt!`);
-  //       console.log("happened");
-  //       setPrompt(prompt + 1);
-  //     }
-  //   }, 10000);
-  //   return () => {
-  //     clearTimeout(timer);
-  //     clearTimeout(warning);
-  //   };
-  // },[prompt])
+  useEffect(()=> {
+    const warning = setTimeout(() => {
+      if (prompt < 4) {
+        alert('5 minutes remaining!');
+      }
+    }, 50000)
+    const timer = setTimeout(() => {
+      if (prompt < 4) {
+        alert(`Moving on to the next prompt!`);
+        console.log("happened");
+        setPrompt(prompt + 1);
+      }
+    }, 100000);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(warning);
+    };
+  },[prompt])
 
   // Set up the socket in a useEffect with nothing in the dependency array,
   // to avoid setting up multiple connections.
   useEffect(() => {
+
+    
     socket.once('connection', (data) => {
       console.log("My ID:", socket.id);
       console.log("my index:", data.count);
@@ -81,6 +82,10 @@ function App() {
       setSubject(data.count + 1);
       setRoom(data.room);
     });
+    
+  },[message])
+
+  useEffect(() => {
     window.onkeydown = function (e) {
       const info = {
         "keyupordown": "down",
@@ -92,7 +97,7 @@ function App() {
         "visibleTextKeystroke": null
       }
       if (experiment != null) {
-        firebase.database().ref('testing/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
+        firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
       }
     }
     
@@ -107,42 +112,67 @@ function App() {
         "visibleTextKeystroke": (e.key.length == 1 || e.code == "Backspace" ? e.key : null),
       }
       if (experiment != null) {
-        firebase.database().ref('testing/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
+        firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
       }
     }
-  },[message])
+  })
 
   useEffect(()=> {
     if (sends != null && sends.from == subject) {
-      firebase.database().ref('testing/' + experiment + '/prompt' + prompt + '/subject' + subject + '/sends').push(sends)
+      firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' + subject + '/sends').push(sends)
     }
   },[sends])
 
   useEffect(()=> {
     if (subject == 1) {
-      // console.log("This is my firebase node: ", myKey);
-      let myKey = firebase.database().ref('testing').push().key;
+      let myKey = firebase.database().ref('prod').push().key;
       socket.emit('setNode', {signal: myKey, room: room });
     } else {
       socket.emit('getNode', {room: room});
     }
   },[subject, room])
 
-  useEffect(() => {
-    socket.on("message", (result) => {
-      console.log("received: ", Date.now())
-      const data = {
-        "from": result.user,
-        "timeSent": sentTime,
-        "timeReceived": Date.now(),
-        "message": result.data
-      }
-      setSends(data);
 
-      document.getElementById('messages').innerHTML += 
-      `<div>Subject ${result.user}: ${result.data}</div>`
-    })
-  },[])
+  function updateScroll(){
+    var element = document.getElementById("messages");
+    element.scrollTop = element.scrollHeight;
+  }
+
+  useEffect(() => { 
+    if (subject != null) {
+      socket.on("message", (result) => {
+        console.log(`result.user: ${result.user}`);
+        console.log(`subject number: ${subject}`);
+        console.log("received: ", Date.now())
+        const data = {
+          "from": result.user,
+          "timeSent": sentTime,
+          "timeReceived": Date.now(),
+          "message": result.data
+        }
+        setSends(data);
+        if (result.user == subject) {
+          console.log("same")
+          document.getElementById('messages').innerHTML += 
+          ` 
+            <div class="o-out band">
+              <div class="o-in message">${result.data}</div>
+            </div>
+          `
+        } else {
+          console.log("different")
+          document.getElementById('messages').innerHTML += 
+          ` 
+            <div class="m-out band">
+              <div class="m-in message">${result.data}</div>
+            </div>
+          `
+        }
+        updateScroll();
+       
+      })
+    }
+  },[subject])
 
   useEffect(()=> {
     window.onkeypress = function (e) {
@@ -173,7 +203,6 @@ function App() {
 
   useEffect(() => {
     socket.on('getNode', (data) => {
-      console.log("THIS ACTUALLY HAPPENED");
       console.log("getNode", data);
       setExperiment(data);
     })

@@ -1,6 +1,45 @@
 * {
   font-size: 20px;
+  font-family: 'Montserrat';
+}
+
+
+.band {
+  display: flex;
   font-family: 'Georgia';
+  /* border: 1px solid purple; */
+  margin: 5px;
+}
+
+.m-out {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.o-out {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+
+
+.message {
+  border: 1px solid black;
+  border-radius: 20px;
+  max-width: 100%;
+  padding: 10px;
+}
+
+.o-in {
+  background-color: rgba(0,0,255,0.8);
+  color: white;
+}
+
+.m-in {
+  background-color: rgba(255,255,255,0.8);
 }
 
 .app {
@@ -25,12 +64,17 @@
 
 .messages {
   height: 90%;
-  width: 96%;
+  width: 90%;
+  padding-left: 20px;
+  padding-top: 5px;
+  padding-right: 20px;
   border: black 1px solid;
   display: flex;
   flex-flow: column nowrap;
   overflow-y: auto;
   margin-top: 1%;
+  border: 1px solid black;
+  border-radius: 5px;
 }
 
 .bar {
@@ -48,6 +92,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+
 }
 
 .send-btn {
@@ -55,6 +100,7 @@
   height: 76%;
   border: 1px solid;
   border-color: rgba(0,0,0,0.5);
+  
 }
 
 .send-btn:hover {
