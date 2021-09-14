@@ -3,8 +3,7 @@
     <head>
         <!-- <meta http-equiv="refresh" content="5; URL=https://keystrokes-collablab.web.app/" /> -->
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"> 
-        <!-- <script src="jatos.js"></script> -->
-
+        <script src="jatos.js"></script>
         
     </head>
     <body>
@@ -25,22 +24,31 @@
           height: 100%;
         ">
       </iframe>
-      <!-- <script>
-        var node = document.getElementById('experiment');
-        node.style.visibility = 'visible';
-        window.onload = function () {
-          setTimeout(() => { 
-            node.style.visibility = 'hidden';
-            node = document.getElementById('done');
-            node.style.visibility = 'visible';
-          }, 10000);
+    
+      <script>
+        if (window.addEventListener) {
+          window.addEventListener("message", onMessage, false);        
+        } 
+        else if (window.attachEvent) {
+            window.attachEvent("onmessage", onMessage, false);
         }
-      </script> -->
-      <!-- <script>
-          console.log("hi")
-          setTimeout(() => { 
-            jatos.endStudyAndRedirect("https://app.prolific.co/submissions/complete?cc=1234ABCD");
-          }, 300500);
-      </script> -->
+
+        function onMessage(event) {
+            // Check sender origin to be trusted
+            if (event.origin !== "http://keystrokes-collablab.web.app") return;
+
+            var data = event.data;
+
+            if (typeof(window[data.func]) == "function") {
+                window[data.func].call(null, data.message);
+          }
+        }
+
+// Function to be called from iframe
+      function parentFunc(message) {
+          alert(message);
+          jatos.endStudyAndRedirect("https://app.prolific.co/submissions/complete?cc=1234ABCD");
+      }
+      </script>
     </body>
 </html>

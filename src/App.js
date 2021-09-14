@@ -5,6 +5,8 @@ import firebase from 'firebase/app';
 
 import 'firebase/database';
 
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyClIAFsYniP3urgKonGG107ZvNj4k6XO9Q",
   authDomain: "keystrokes-collablab.firebaseapp.com",
@@ -18,11 +20,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const socket = openSocket('https://keystrokes-collablab.herokuapp.com', {rejectUnauthorized: false, transports: ['websocket']});
-
-// Important
-window.onbeforeunload = function () {
-  return '';
-}
 
 function App() {
 
@@ -49,29 +46,45 @@ function App() {
   const [sends, setSends] = useState(null);
 
   useEffect(()=> {
+    // The warning and timer Timeouts will run once every time the prompt changes.
+    // Code will run after the miliseconds specified by the setTimeout's second arg.
     const warning = setTimeout(() => {
       if (prompt < 4) {
         alert('5 minutes remaining!');
       }
-    }, 50000)
+    }, 5000)
     const timer = setTimeout(() => {
       if (prompt < 4) {
-        alert(`Moving on to the next prompt!`);
+        // When the time is up, increment the prompt state variable.
         console.log("happened");
         setPrompt(prompt + 1);
+        alert(`Moving on to the next prompt!`);
+
+        
       }
-    }, 100000);
+    }, 10000);
     return () => {
       clearTimeout(timer);
       clearTimeout(warning);
     };
+  // The second argument to useEffect says, execute the code in useEffect 
+  // every time the state variables in the array change.
+  // These are special variables controlled by React Hooks (e.g. useState())
+  },[prompt])
+
+  useEffect(()=> {
+    if (prompt >= 4) {
+      // After the last prompt, signal the parent frame to run jatos.endStudyAndRedirect
+      window.parent.postMessage({
+        'func': 'parentFunc',
+        'message': 'Message text from iframe.'
+      }, "http://localhost:9000");
+    }
   },[prompt])
 
   // Set up the socket in a useEffect with nothing in the dependency array,
   // to avoid setting up multiple connections.
   useEffect(() => {
-
-    
     socket.once('connection', (data) => {
       console.log("My ID:", socket.id);
       console.log("my index:", data.count);
@@ -83,6 +96,8 @@ function App() {
   },[message])
 
   useEffect(() => {
+
+
     window.onkeydown = function (e) {
       const info = {
         "keyupordown": "down",
@@ -113,6 +128,7 @@ function App() {
       }
     }
   })
+
 
   useEffect(()=> {
     if (sends != null && sends.from == subject) {
@@ -183,7 +199,6 @@ function App() {
     setMessage("");
     if (message != "") {
       setSentTime(Date.now());
-      //
       socket.emit("message", {signal: {user: subject, data: message}, room: room});
     } else {
       console.log("empty message:", Date.now())
@@ -191,6 +206,7 @@ function App() {
   }
 
   useEffect(()=> {
+    // If the client is the first member in their room, initialize a firebase Node for the room to write to.
     socket.on('setNode', (data) => {
       console.log("setNode", data);
       setExperiment(data);
@@ -198,6 +214,7 @@ function App() {
   },[])
 
   useEffect(() => {
+    // If the client is the second member in their room, get the firebase Node that was alread initialized.
     socket.on('getNode', (data) => {
       console.log("getNode", data);
       setExperiment(data);
@@ -208,9 +225,8 @@ function App() {
     console.log("Experiment:", experiment)
   },[experiment])
 
-
-
   return (
+    // There will never be 3 people in a room.
     subject >= 3 ? <div>ERROR</div> : 
     <div className="app">
       <div className="chatbox">
@@ -224,11 +240,13 @@ function App() {
             }}>
             </input>
           </div>
+          {/* Button code below. */}
           {/* <div className="send-btn" onClick={() => sendMessage(message)}></div> */}
         </div>
       </div>
       <div className="prompt">
-          <div style={{margin: "50px"}}>{prompts[prompt - 1]}</div>
+        {/* Display the prompt based on which prompt you're on: */}
+        <div style={{margin: "50px"}}>{prompts[prompt - 1]}</div>
       </div>
     </div>
   );
