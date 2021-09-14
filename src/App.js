@@ -45,6 +45,7 @@ function App() {
   const [sentTime, setSentTime] = useState(Date.now());
   const [sends, setSends] = useState(null);
 
+
   useEffect(()=> {
     // The warning and timer Timeouts will run once every time the prompt changes.
     // Code will run after the miliseconds specified by the setTimeout's second arg.
@@ -52,7 +53,7 @@ function App() {
       if (prompt < 4) {
         alert('5 minutes remaining!');
       }
-    }, 5000)
+    }, 500000)
     const timer = setTimeout(() => {
       if (prompt < 4) {
         // When the time is up, increment the prompt state variable.
@@ -62,7 +63,7 @@ function App() {
 
         
       }
-    }, 10000);
+    }, 1000000);
     return () => {
       clearTimeout(timer);
       clearTimeout(warning);
@@ -94,11 +95,11 @@ function App() {
     });
     
   },[message])
+  
+  const [keystrokes, setKeystrokes] = useState({});
 
   useEffect(() => {
-
-
-    window.onkeydown = function (e) {
+    window.onkeydown = async function (e) {
       const info = {
         "keyupordown": "down",
         "eCode": e.code, 
@@ -109,11 +110,12 @@ function App() {
         "visibleTextKeystroke": null
       }
       if (experiment != null) {
-        firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
+        setKeystrokes(Object.assign(keystrokes, {[e.code]: firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push().key}));
+        firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject'  + subject + '/keys/' + keystrokes[[e.code]]).push(info); 
+        console.log("After down: ", keystrokes)
       }
     }
-    
-    window.onkeyup = function (e) {
+    window.onkeyup = async function (e) {
       const info = {
         "keyupordown": "up",
         "eCode": e.code, 
@@ -124,9 +126,16 @@ function App() {
         "visibleTextKeystroke": (e.key.length == 1 || e.code == "Backspace" ? e.key : null),
       }
       if (experiment != null) {
-        firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push(info);
+        firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject'  +  subject + '/keys/' + keystrokes[[e.code]]).push(info).then(() => {
+          console.log("In the middle: ", keystrokes);
+          setKeystrokes(Object.assign(keystrokes, {[e.code]: null}));
+        }).then(() => {
+          console.log("After up: ", keystrokes);
+        })
       }
     }
+    
+   
   })
 
 
