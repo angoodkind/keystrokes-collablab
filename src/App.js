@@ -20,6 +20,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const socket = openSocket('https://keystrokes-collablab.herokuapp.com', {rejectUnauthorized: false, transports: ['websocket']});
+// const socket = openSocket('http://localhost:8080', {rejectUnauthorized: false, transports: ['websocket']});
 
 function App() {
 
@@ -73,12 +74,13 @@ function App() {
   // These are special variables controlled by React Hooks (e.g. useState())
   },[prompt])
 
+
   useEffect(()=> {
     if (prompt >= 4) {
       // After the last prompt, signal the parent frame to run jatos.endStudyAndRedirect
       window.parent.postMessage({
         'func': 'parentFunc',
-        'message': 'Message text from iframe.'
+        'message': 'Redirecting...'
       }, "http://localhost:9000");
     }
   },[prompt])
@@ -134,8 +136,6 @@ function App() {
         })
       }
     }
-    
-   
   })
 
 
@@ -213,6 +213,8 @@ function App() {
       console.log("empty message:", Date.now())
     }
   }
+
+
 
   useEffect(()=> {
     // If the client is the first member in their room, initialize a firebase Node for the room to write to.
