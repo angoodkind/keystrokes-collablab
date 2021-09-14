@@ -17,17 +17,14 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const socket = openSocket('http://keystrokes-collablab.herokuapp.com', {transports: ['websocket'], rejectUnauthorized: false});
+const socket = openSocket('https://keystrokes-collablab.herokuapp.com', {rejectUnauthorized: false, transports: ['websocket']});
 
 // Important
-// window.onbeforeunload = function () {
-//   return '';
-// }
-
-const start = Date.now();
+window.onbeforeunload = function () {
+  return '';
+}
 
 function App() {
-  document.cookie = 'True';
 
   const prompts = [
     `[Subject1] has had a long week at work, 
@@ -92,7 +89,7 @@ function App() {
         "eCode": e.code, 
         "eKey": e.key, 
         "eKeyCode": e.keyCode, 
-        "timestamp": Date.now() - start,
+        "timestamp": Date.now(),
         "existingTextMessage": message,
         "visibleTextKeystroke": null
       }
@@ -107,7 +104,7 @@ function App() {
         "eCode": e.code, 
         "eKey": e.key, 
         "eKeyCode": e.keyCode, 
-        "timestamp": Date.now() - start,
+        "timestamp": Date.now(),
         "existingTextMessage": message,
         "visibleTextKeystroke": (e.key.length == 1 || e.code == "Backspace" ? e.key : null),
       }
@@ -169,7 +166,6 @@ function App() {
           `
         }
         updateScroll();
-       
       })
     }
   },[subject])
