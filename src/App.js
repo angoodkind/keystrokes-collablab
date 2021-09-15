@@ -54,7 +54,7 @@ function App() {
       if (prompt < 4) {
         alert('5 minutes remaining!');
       }
-    }, 500000)
+    }, 5000)
     const timer = setTimeout(() => {
       if (prompt < 4) {
         // When the time is up, increment the prompt state variable.
@@ -64,7 +64,7 @@ function App() {
 
         
       }
-    }, 1000000);
+    }, 10000);
     return () => {
       clearTimeout(timer);
       clearTimeout(warning);
@@ -81,7 +81,7 @@ function App() {
       window.parent.postMessage({
         'func': 'parentFunc',
         'message': 'Redirecting...'
-      }, "http://localhost:9000");
+      }, "http://http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:9000");
     }
   },[prompt])
 
