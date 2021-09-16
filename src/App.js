@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import openSocket from 'socket.io-client';
 import './App.css';
 import firebase from 'firebase/app';
-
 import 'firebase/database';
 
-
-
+// Must configure firebase before using its services
 const firebaseConfig = {
   apiKey: "AIzaSyClIAFsYniP3urgKonGG107ZvNj4k6XO9Q",
   authDomain: "keystrokes-collablab.firebaseapp.com",
@@ -16,14 +14,16 @@ const firebaseConfig = {
   appId: "1:840523701382:web:fef2f9e89331274fcd0507",
   measurementId: "G-HVG23GCK81"
 };
-
 firebase.initializeApp(firebaseConfig);
 
+// Open a connection to the socket.io server hosted on Heroku
 const socket = openSocket('https://keystrokes-collablab.herokuapp.com', {rejectUnauthorized: false, transports: ['websocket']});
-// const socket = openSocket('http://localhost:8080', {rejectUnauthorized: false, transports: ['websocket']});
 
+// This is the App that will be rendered by React in index.js.
 function App() {
-
+  
+  // This is the array of prompts that will be displayed to the experiment subjects.
+  // The first prompt should be the first element of the array, and so on.
   const prompts = [
     `[Subject1] has had a long week at work, 
       and would like to relax and watch a movie to unwind. 
@@ -38,6 +38,7 @@ function App() {
       `Finished`
   ]
   
+  // These are React variables that control the state of the app. 
   const [subject, setSubject] = useState(null);
   const [room, setRoom] = useState();
   const [message, setMessage] = useState("");
@@ -48,40 +49,38 @@ function App() {
 
 
   useEffect(()=> {
-    // The warning and timer Timeouts will run once every time the prompt changes.
     // Code will run after the miliseconds specified by the setTimeout's second arg.
     const warning = setTimeout(() => {
       if (prompt < 4) {
         alert('5 minutes remaining!');
       }
+      // Change this number to make the alert trigger after a delay of x seconds. 
     }, 5000)
     const timer = setTimeout(() => {
       if (prompt < 4) {
         // When the time is up, increment the prompt state variable.
-        console.log("happened");
         setPrompt(prompt + 1);
         alert(`Moving on to the next prompt!`);
-
-        
       }
+      // Change this number to make the alert trigger after a delay of x seconds. 
     }, 10000);
     return () => {
       clearTimeout(timer);
       clearTimeout(warning);
     };
-  // The second argument to useEffect says, execute the code in useEffect 
-  // every time the state variables in the array change.
-  // These are special variables controlled by React Hooks (e.g. useState())
+    // The warning and timer Timeout(s) will run once every time the prompt changes.
   },[prompt])
 
 
   useEffect(()=> {
     if (prompt >= 4) {
-      // After the last prompt, signal the parent frame to run jatos.endStudyAndRedirect
+      // After the last prompt, signal the parent frame to run jatos.endStudyAndRedirect,
+      // Which will redirect the user to Prolific's page and end the study.
+      // The code logic for the redirect can be found in ./redirect.html. 
       window.parent.postMessage({
         'func': 'parentFunc',
         'message': 'Redirecting...'
-      }, "http://http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:9000");
+      }, "http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:9000");
     }
   },[prompt])
 
@@ -95,9 +94,10 @@ function App() {
       setSubject(data.count + 1);
       setRoom(data.room);
     });
-    
-  },[message])
+  },[])
   
+  // The keystrokes variable is how we will store the write location on keydowns
+  // and write to the same location on key ups.
   const [keystrokes, setKeystrokes] = useState({});
 
   useEffect(() => {
@@ -112,7 +112,9 @@ function App() {
         "visibleTextKeystroke": null
       }
       if (experiment != null) {
+        // Map the keystroke to its latest firebase node.
         setKeystrokes(Object.assign(keystrokes, {[e.code]: firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' +  subject + '/keys').push().key}));
+        // Write the info object to that location.
         firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject'  + subject + '/keys/' + keystrokes[[e.code]]).push(info); 
         console.log("After down: ", keystrokes)
       }
@@ -128,8 +130,12 @@ function App() {
         "visibleTextKeystroke": (e.key.length == 1 || e.code == "Backspace" ? e.key : null),
       }
       if (experiment != null) {
+        // Retrieve the latest firebase node for the given keystroke.
+        // Write the info object to that location.
+
         firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject'  +  subject + '/keys/' + keystrokes[[e.code]]).push(info).then(() => {
           console.log("In the middle: ", keystrokes);
+          // Erase the association between the pressed key and specific firebase node
           setKeystrokes(Object.assign(keystrokes, {[e.code]: null}));
         }).then(() => {
           console.log("After up: ", keystrokes);
@@ -141,20 +147,27 @@ function App() {
 
   useEffect(()=> {
     if (sends != null && sends.from == subject) {
+      // "Sends" is an object storing the information for chats about to be sent. 
       firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' + subject + '/sends').push(sends)
     }
   },[sends])
 
   useEffect(()=> {
     if (subject == 1) {
+      // If the subject is the second person in the room (subject 1), get the current room number from the server
+      // So that both subjects write to the same location in firebase
       let myKey = firebase.database().ref('prod').push().key;
       socket.emit('setNode', {signal: myKey, room: room });
     } else {
+      // If the subject is the first person in the room (subject 0), get a new room number that the next subject that
+      // enters the room can use.
       socket.emit('getNode', {room: room});
     }
   },[subject, room])
 
 
+  // When more messages than visible in the chat interface can be shown,
+  // The chat will automatically scroll to the latest chat on send / unless the user scrolls up
   function updateScroll(){
     var element = document.getElementById("messages");
     element.scrollTop = element.scrollHeight;
@@ -173,6 +186,10 @@ function App() {
           "message": result.data
         }
         setSends(data);
+        // When the socket receives a message, it has to know if this message was sent by
+        // a different client or itself.
+        // Based on the identity of the sender it will render an appropriately styled chat box
+        // Controlled by CSS classes.
         if (result.user == subject) {
           console.log("same")
           document.getElementById('messages').innerHTML += 
@@ -196,6 +213,7 @@ function App() {
   },[subject])
 
   useEffect(()=> {
+    // This is the enter button that sends a message.
     window.onkeypress = function (e) {
       if (e.code == "Enter") {
         sendMessage(message)
@@ -203,6 +221,8 @@ function App() {
     }
   },[message])
   
+  // Sends the message that is currently stored in the message state variable and
+  // resets that variable.
   function sendMessage (message) {
     document.getElementById("text-input").value = "";
     setMessage("");
@@ -213,8 +233,6 @@ function App() {
       console.log("empty message:", Date.now())
     }
   }
-
-
 
   useEffect(()=> {
     // If the client is the first member in their room, initialize a firebase Node for the room to write to.
@@ -236,6 +254,7 @@ function App() {
     console.log("Experiment:", experiment)
   },[experiment])
 
+  // This is the JSX (React's version of HTML) structure of the chat interface
   return (
     // There will never be 3 people in a room.
     subject >= 3 ? <div>ERROR</div> : 
