@@ -234,11 +234,20 @@ function App() {
     }
   }
 
+  // time-stamp at beginning of experiment
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minutes = date.getMinutes();
+  const expDate =  year+'_'+month+'_'+day+'_'+hour+':'+minutes;
+
   useEffect(()=> {
     // If the client is the first member in their room, initialize a firebase Node for the room to write to.
     socket.on('setNode', (data) => {
       console.log("setNode", data);
-      setExperiment(data);
+      setExperiment(expDate+'_'+JSON.stringify(data));
     })
   },[])
 
@@ -246,7 +255,7 @@ function App() {
     // If the client is the second member in their room, get the firebase Node that was alread initialized.
     socket.on('getNode', (data) => {
       console.log("getNode", data);
-      setExperiment(data);
+      setExperiment(expDate+'_'+JSON.stringify(data));
     })
   },[])
 
