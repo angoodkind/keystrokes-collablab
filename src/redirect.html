@@ -3,15 +3,17 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"> 
         <!-- Load the JATOS library -->
-        <script src="jatos.js"></script>
+        <script src="jatos.js">
+        </script>
         
     </head>
     <body>
       <!-- Load the actual React page that will be running on localhost:3000 on the AWS EC2 instance through an iframe. -->
       <!-- That is where the actual study is - we are using this html page to use JATOS functions only -->
-      <iframe
+      <!-- "http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:3000" -->
+      <iframe id="iframe"
         id="experiment"
-        src="http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:3000"
+        src="http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:3000"
         style="
           position: fixed;
           top: 0px;
@@ -30,9 +32,20 @@
 
       <!-- This script is listening for the event that prompt >= 4 on the iframe so it knows to end the study. -->
       <script>
+        function getProlific(message) {
+           console.log("AHHH");
+          }
+        jatos.onLoad(() => {
+          console.log("Done loading");
+          document.getElementById('iframe').contentWindow.postMessage({
+          'func': 'getProlific',
+          'message': JSON.stringify(jatos.batchId),
+        }, 'http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:3000');
+        });
+
         if (window.addEventListener) {
-          window.addEventListener("message", onMessage, false);        
-        } 
+            window.addEventListener("message", onMessage, false);        
+          } 
         else if (window.attachEvent) {
             window.attachEvent("onmessage", onMessage, false);
         }
@@ -40,20 +53,18 @@
         function onMessage(event) {
             // Check sender origin to be trusted
             console.log(event.origin);
-            if (event.origin !== "http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:3000") return;
-
+            // if (event.origin !== "http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:3000") return;
+            if (event.origin !== "http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:3000") return;
             var data = event.data;
-
             if (typeof(window[data.func]) == "function") {
                 window[data.func].call(null, data.message);
-          }
+          }  
         }
 
-// This is the jatos function that is called from the iframe that redirects users.
-      function parentFunc(message) {
-          alert(message);
-          jatos.endStudyAndRedirect("https://app.prolific.co/submissions/complete?cc=1234ABCD");
-      }
+        function parentFunc(message) {
+            alert(message);
+            jatos.endStudyAndRedirect("https://app.prolific.co/submissions/complete?cc=1234ABCD");
+        }
       </script>
     </body>
 </html>

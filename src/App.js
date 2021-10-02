@@ -5,19 +5,30 @@ import firebase from 'firebase/app';
 import 'firebase/database';
 
 // Must configure firebase before using its services
+// const firebaseConfig = {
+//   apiKey: "AIzaSyClIAFsYniP3urgKonGG107ZvNj4k6XO9Q",
+//   authDomain: "keystrokes-collablab.firebaseapp.com",
+//   projectId: "keystrokes-collablab",
+//   storageBucket: "keystrokes-collablab.appspot.com",
+//   messagingSenderId: "840523701382",
+//   appId: "1:840523701382:web:fef2f9e89331274fcd0507",
+//   measurementId: "G-HVG23GCK81"
+// };
+
 const firebaseConfig = {
-  apiKey: "AIzaSyClIAFsYniP3urgKonGG107ZvNj4k6XO9Q",
-  authDomain: "keystrokes-collablab.firebaseapp.com",
-  projectId: "keystrokes-collablab",
-  storageBucket: "keystrokes-collablab.appspot.com",
-  messagingSenderId: "840523701382",
-  appId: "1:840523701382:web:fef2f9e89331274fcd0507",
-  measurementId: "G-HVG23GCK81"
+  apiKey: "AIzaSyACBXEEZkuM3MFDtpn38MqbWsvuByekWj8",
+  authDomain: "collablab-final.firebaseapp.com",
+  projectId: "collablab-final",
+  storageBucket: "collablab-final.appspot.com",
+  messagingSenderId: "156901731638",
+  appId: "1:156901731638:web:294fda7af58c93ba3b1797",
+  measurementId: "G-TGWTC3934F"
 };
+
 firebase.initializeApp(firebaseConfig);
 
-// Open a connection to the socket.io server hosted on Heroku
-const socket = openSocket('https://keystrokes-collablab.herokuapp.com', {rejectUnauthorized: false, transports: ['websocket']});
+// Open a connection to the socket.io server 
+const socket = openSocket('http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:8080', {rejectUnauthorized: false, transports: ['websocket']});
 
 // This is the App that will be rendered by React in index.js.
 function App() {
@@ -46,30 +57,51 @@ function App() {
   const [experiment, setExperiment] = useState(null);
   const [sentTime, setSentTime] = useState(Date.now());
   const [sends, setSends] = useState(null);
+  const [prolific, setProlific] = useState(null);
+
+  // Get all jatos related variables here
+  if (window.addEventListener) {
+    window.addEventListener("message", onMessage, false);        
+  } 
+  else if (window.attachEvent) {
+      window.attachEvent("onmessage", onMessage, false);
+  }
+
+  function onMessage(event) {
+    // Check sender origin to be trusted
+    console.log("YEEHAW");
+    console.log(event.origin);
+    if (event.origin !== "http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:9000") return;
+    setProlific(event.data.message);
+  }
+
+  useEffect(() => {
+    console.log("prolific: ", prolific);
+  },[prolific])
 
 
-  useEffect(()=> {
-    // Code will run after the miliseconds specified by the setTimeout's second arg.
-    const warning = setTimeout(() => {
-      if (prompt < 4) {
-        alert('5 minutes remaining!');
-      }
-      // Change this number to make the alert trigger after a delay of x seconds. 
-    }, 5000)
-    const timer = setTimeout(() => {
-      if (prompt < 4) {
-        // When the time is up, increment the prompt state variable.
-        setPrompt(prompt + 1);
-        alert(`Moving on to the next prompt!`);
-      }
-      // Change this number to make the alert trigger after a delay of x seconds. 
-    }, 10000);
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(warning);
-    };
-    // The warning and timer Timeout(s) will run once every time the prompt changes.
-  },[prompt])
+  // useEffect(()=> {
+  //   // Code will run after the miliseconds specified by the setTimeout's second arg.
+  //   const warning = setTimeout(() => {
+  //     if (prompt < 4) {
+  //       alert('5 minutes remaining!');
+  //     }
+  //     // Change this number to make the alert trigger after a delay of x seconds. 
+  //   }, 5000)
+  //   const timer = setTimeout(() => {
+  //     if (prompt < 4) {
+  //       // When the time is up, increment the prompt state variable.
+  //       setPrompt(prompt + 1);
+  //       alert(`Moving on to the next prompt!`);
+  //     }
+  //     // Change this number to make the alert trigger after a delay of x seconds. 
+  //   }, 10000);
+  //   return () => {
+  //     clearTimeout(timer);
+  //     clearTimeout(warning);
+  //   };
+  //   // The warning and timer Timeout(s) will run once every time the prompt changes.
+  // },[prompt])
 
 
   useEffect(()=> {
@@ -77,10 +109,14 @@ function App() {
       // After the last prompt, signal the parent frame to run jatos.endStudyAndRedirect,
       // Which will redirect the user to Prolific's page and end the study.
       // The code logic for the redirect can be found in ./redirect.html. 
+      // window.parent.postMessage({
+      //   'func': 'parentFunc',
+      //   'message': 'Redirecting...'
+      // }, "http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:9000");
       window.parent.postMessage({
         'func': 'parentFunc',
         'message': 'Redirecting...'
-      }, "http://ec2-3-144-17-64.us-east-2.compute.amazonaws.com:9000");
+      }, "http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:9000");
     }
   },[prompt])
 
@@ -247,7 +283,8 @@ function App() {
     // If the client is the first member in their room, initialize a firebase Node for the room to write to.
     socket.on('setNode', (data) => {
       console.log("setNode", data);
-      setExperiment(expDate+'_'+JSON.stringify(data));
+      // expDate+'_'+
+      setExperiment(JSON.stringify(data));
     })
   },[])
 
@@ -255,7 +292,8 @@ function App() {
     // If the client is the second member in their room, get the firebase Node that was alread initialized.
     socket.on('getNode', (data) => {
       console.log("getNode", data);
-      setExperiment(expDate+'_'+JSON.stringify(data));
+      // expDate+'_'+
+      setExperiment(JSON.stringify(data));
     })
   },[])
 
