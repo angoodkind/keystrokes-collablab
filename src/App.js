@@ -5,30 +5,21 @@ import firebase from 'firebase/app';
 import 'firebase/database';
 
 // Must configure firebase before using its services
-// const firebaseConfig = {
-//   apiKey: "AIzaSyClIAFsYniP3urgKonGG107ZvNj4k6XO9Q",
-//   authDomain: "keystrokes-collablab.firebaseapp.com",
-//   projectId: "keystrokes-collablab",
-//   storageBucket: "keystrokes-collablab.appspot.com",
-//   messagingSenderId: "840523701382",
-//   appId: "1:840523701382:web:fef2f9e89331274fcd0507",
-//   measurementId: "G-HVG23GCK81"
-// };
-
 const firebaseConfig = {
-  apiKey: "AIzaSyACBXEEZkuM3MFDtpn38MqbWsvuByekWj8",
-  authDomain: "collablab-final.firebaseapp.com",
-  projectId: "collablab-final",
-  storageBucket: "collablab-final.appspot.com",
-  messagingSenderId: "156901731638",
-  appId: "1:156901731638:web:294fda7af58c93ba3b1797",
-  measurementId: "G-TGWTC3934F"
+
+  apiKey: "AIzaSyBWJmpNZvlexkgSRvCi9IGe4ZZFGgaE9sc",
+  authDomain: "keystroke-dialogue.firebaseapp.com",
+  projectId: "keystroke-dialogue",
+  storageBucket: "keystroke-dialogue.appspot.com",
+  messagingSenderId: "258869565916",
+  appId: "1:258869565916:web:a5388f1b8ec7ee25709719"
 };
+
 
 firebase.initializeApp(firebaseConfig);
 
 // Open a connection to the socket.io server 
-const socket = openSocket('http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:8080', {rejectUnauthorized: false, transports: ['websocket']});
+const socket = openSocket('http://ec2-18-223-160-60.us-east-2.compute.amazonaws.com:8080', {rejectUnauthorized: false, transports: ['websocket']});
 
 // This is the App that will be rendered by React in index.js.
 function App() {
@@ -71,7 +62,7 @@ function App() {
     // Check sender origin to be trusted
     console.log("YEEHAW");
     console.log(event.origin);
-    if (event.origin !== "http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:9000") return;
+    if (event.origin !== "http://ec2-18-223-160-60.us-east-2.compute.amazonaws.com:9000") return;
     setProlific(event.data.message);
   }
 
