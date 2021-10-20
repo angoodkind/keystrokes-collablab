@@ -60,8 +60,8 @@ function App() {
 
   function onMessage(event) {
     // Check sender origin to be trusted
-    console.log("YEEHAW");
-    console.log(event.origin);
+    // console.log("YEEHAW");
+    // console.log(event.origin);
     if (event.origin !== "http://ec2-18-223-160-60.us-east-2.compute.amazonaws.com:9000") return;
     setProlific(event.data.message);
   }
@@ -71,28 +71,28 @@ function App() {
   },[prolific])
 
 
-  // useEffect(()=> {
-  //   // Code will run after the miliseconds specified by the setTimeout's second arg.
-  //   const warning = setTimeout(() => {
-  //     if (prompt < 4) {
-  //       alert('5 minutes remaining!');
-  //     }
-  //     // Change this number to make the alert trigger after a delay of x seconds. 
-  //   }, 5000)
-  //   const timer = setTimeout(() => {
-  //     if (prompt < 4) {
-  //       // When the time is up, increment the prompt state variable.
-  //       setPrompt(prompt + 1);
-  //       alert(`Moving on to the next prompt!`);
-  //     }
-  //     // Change this number to make the alert trigger after a delay of x seconds. 
-  //   }, 10000);
-  //   return () => {
-  //     clearTimeout(timer);
-  //     clearTimeout(warning);
-  //   };
-  //   // The warning and timer Timeout(s) will run once every time the prompt changes.
-  // },[prompt])
+  useEffect(()=> {
+    // Code will run after the miliseconds specified by the setTimeout's second arg.
+    // const warning = setTimeout(() => {
+    //   if (prompt < 4) {
+    //     alert('5 minutes remaining!');
+    //   }
+    //   // Change this number to make the alert trigger after a delay of x seconds. 
+    // }, 5000)
+    const timer = setTimeout(() => {
+      if (prompt < 4) {
+        // When the time is up, increment the prompt state variable.
+        setPrompt(prompt + 1);
+        alert(`Moving on to the next prompt!`);
+      }
+      // Change this number to make the alert trigger after a delay of x seconds. 
+    }, 10000);
+    return () => {
+      clearTimeout(timer);
+      // clearTimeout(warning);
+    };
+    // The warning and timer Timeout(s) will run once every time the prompt changes.
+  },[prompt])
 
 
   useEffect(()=> {
@@ -263,19 +263,13 @@ function App() {
 
   // time-stamp at beginning of experiment
   const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minutes = date.getMinutes();
-  const expDate =  year+'_'+month+'_'+day+'_'+hour+':'+minutes;
+  const expDate = date.toJSON().replace('.',':'); // cannot have a . in the name
 
   useEffect(()=> {
     // If the client is the first member in their room, initialize a firebase Node for the room to write to.
     socket.on('setNode', (data) => {
       console.log("setNode", data);
-      // expDate+'_'+
-      setExperiment(JSON.stringify(data));
+      setExperiment(expDate+`-`+JSON.stringify(data));
     })
   },[])
 
@@ -283,8 +277,7 @@ function App() {
     // If the client is the second member in their room, get the firebase Node that was alread initialized.
     socket.on('getNode', (data) => {
       console.log("getNode", data);
-      // expDate+'_'+
-      setExperiment(JSON.stringify(data));
+      setExperiment(expDate+`-`+JSON.stringify(data));
     })
   },[])
 
