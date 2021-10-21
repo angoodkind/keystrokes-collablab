@@ -83,10 +83,10 @@ function App() {
       if (prompt < 4) {
         // When the time is up, increment the prompt state variable.
         setPrompt(prompt + 1);
-        alert(`Moving on to the next prompt!`);
+        // alert(`Moving on to the next prompt!`);
       }
       // Change this number to make the alert trigger after a delay of x seconds. 
-    }, 10000);
+    }, 20000);
     return () => {
       clearTimeout(timer);
       // clearTimeout(warning);
@@ -107,7 +107,7 @@ function App() {
       window.parent.postMessage({
         'func': 'parentFunc',
         'message': 'Redirecting...'
-      }, "http://ec2-18-222-152-43.us-east-2.compute.amazonaws.com:9000");
+      }, "http://ec2-18-223-160-60.us-east-2.compute.amazonaws.com:3000");
     }
   },[prompt])
 
@@ -118,6 +118,7 @@ function App() {
       console.log("My ID:", socket.id);
       console.log("my index:", data.count);
       console.log(`I'm connected with the back-end in room ${data.room}`);
+      alert("You are Subject "+data.count);
       setSubject(data.count + 1);
       setRoom(data.room);
     });
@@ -262,8 +263,9 @@ function App() {
   }
 
   // time-stamp at beginning of experiment
-  const date = new Date();
-  const expDate = date.toJSON().replace('.',':'); // cannot have a . in the name
+  const d = new Date();
+  // const expDate = d.toLocaleString().replace(/\//g,'-').replace(',','').replaceAll(' ','_');
+  const expDate = d.toLocaleDateString().replace(/\//g,'-');
 
   useEffect(()=> {
     // If the client is the first member in their room, initialize a firebase Node for the room to write to.
@@ -274,7 +276,7 @@ function App() {
   },[])
 
   useEffect(() => {
-    // If the client is the second member in their room, get the firebase Node that was alread initialized.
+    // If the client is the second member in their room, get the firebase Node that was already initialized.
     socket.on('getNode', (data) => {
       console.log("getNode", data);
       setExperiment(expDate+`-`+JSON.stringify(data));
