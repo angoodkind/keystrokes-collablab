@@ -107,7 +107,8 @@ function App() {
       window.parent.postMessage({
         'func': 'parentFunc',
         'message': 'Redirecting...'
-      }, "http://ec2-18-223-160-60.us-east-2.compute.amazonaws.com:3000");
+      }, "http://ec2-18-223-160-60.us-east-2.compute.amazonaws.com:9000");
+      // }, "http://localhost:3000");
     }
   },[prompt])
 
@@ -155,7 +156,7 @@ function App() {
         "eKeyCode": e.keyCode, 
         "timestamp": Date.now(),
         "existingTextMessage": message,
-        "visibleTextKeystroke": (e.key.length == 1 || e.code == "Backspace" ? e.key : null),
+        "visibleTextKeystroke": (e.key.length === 1 || e.code === "Backspace" ? e.key : null),
       }
       if (experiment != null) {
         // Retrieve the latest firebase node for the given keystroke.
@@ -174,14 +175,14 @@ function App() {
 
 
   useEffect(()=> {
-    if (sends != null && sends.from == subject) {
+    if (sends != null && sends.from === subject) {
       // "Sends" is an object storing the information for chats about to be sent. 
       firebase.database().ref('prod/' + experiment + '/prompt' + prompt + '/subject' + subject + '/sends').push(sends)
     }
   },[sends])
 
   useEffect(()=> {
-    if (subject == 1) {
+    if (subject === 1) {
       // If the subject is the second person in the room (subject 1), get the current room number from the server
       // So that both subjects write to the same location in firebase
       let myKey = firebase.database().ref('prod').push().key;
@@ -218,7 +219,7 @@ function App() {
         // a different client or itself.
         // Based on the identity of the sender it will render an appropriately styled chat box
         // Controlled by CSS classes.
-        if (result.user == subject) {
+        if (result.user === subject) {
           console.log("same")
           document.getElementById('messages').innerHTML += 
           ` 
@@ -243,7 +244,7 @@ function App() {
   useEffect(()=> {
     // This is the enter button that sends a message.
     window.onkeypress = function (e) {
-      if (e.code == "Enter") {
+      if (e.code === "Enter") {
         sendMessage(message)
       }
     }
@@ -254,7 +255,7 @@ function App() {
   function sendMessage (message) {
     document.getElementById("text-input").value = "";
     setMessage("");
-    if (message != "") {
+    if (message !== "") {
       setSentTime(Date.now());
       socket.emit("message", {signal: {user: subject, data: message}, room: room});
     } else {
@@ -265,7 +266,7 @@ function App() {
   // time-stamp at beginning of experiment
   const d = new Date();
   // const expDate = d.toLocaleString().replace(/\//g,'-').replace(',','').replaceAll(' ','_');
-  const expDate = d.toLocaleDateString().replace(/\//g,'-');
+  const expDate = d.toLocaleDateString().replace(/\//g,'-'); // replace all /'s with -'s
 
   useEffect(()=> {
     // If the client is the first member in their room, initialize a firebase Node for the room to write to.
