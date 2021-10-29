@@ -3,42 +3,16 @@ import openSocket from 'socket.io-client';
 import './App.css';
 import firebase from 'firebase/app';
 import 'firebase/database';
+import * as constants from './constants';
 
 // Must configure firebase before using its services
-const firebaseConfig = {
-
-  apiKey: "AIzaSyBWJmpNZvlexkgSRvCi9IGe4ZZFGgaE9sc",
-  authDomain: "keystroke-dialogue.firebaseapp.com",
-  projectId: "keystroke-dialogue",
-  storageBucket: "keystroke-dialogue.appspot.com",
-  messagingSenderId: "258869565916",
-  appId: "1:258869565916:web:a5388f1b8ec7ee25709719"
-};
-
-
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(constants.firebaseConfig);
 
 // Open a connection to the socket.io server 
-const socket = openSocket('http://ec2-18-223-160-60.us-east-2.compute.amazonaws.com:8080', {rejectUnauthorized: false, transports: ['websocket']});
+const socket = openSocket(`${constants.ec2Base}:8080`, {rejectUnauthorized: false, transports: ['websocket']});
 
 // This is the App that will be rendered by React in index.js.
 function App() {
-  
-  // This is the array of prompts that will be displayed to the experiment subjects.
-  // The first prompt should be the first element of the array, and so on.
-  const prompts = [
-    `[Subject1] has had a long week at work, 
-      and would like to relax and watch a movie to unwind. 
-      [Subject2], what movie or movies would you recommend and why?
-      Feel free to get to know each other, your tastes in movies, 
-      and discuss why you’ve recommended these movies. 
-      Do not hesitate to express opinions, 
-      for example about what you like or don’t like about certain movies or movie genres, 
-      or certain actors and actresses.`,
-      `prompt 2`,
-      'prompt 3',
-      `Finished`
-  ]
   
   // These are React variables that control the state of the app. 
   const [subject, setSubject] = useState(null);
@@ -60,8 +34,6 @@ function App() {
 
   function onMessage(event) {
     // Check sender origin to be trusted
-    // console.log("YEEHAW");
-    // console.log(event.origin);
     if (event.origin !== "http://ec2-18-223-160-60.us-east-2.compute.amazonaws.com:9000") return;
     setProlific(event.data.message);
   }
@@ -72,22 +44,15 @@ function App() {
 
 
   useEffect(()=> {
-    // Code will run after the miliseconds specified by the setTimeout's second arg.
-    // const warning = setTimeout(() => {
-    //   if (prompt < 4) {
-    //     alert('5 minutes remaining!');
-    //   }
-    //   // Change this number to make the alert trigger after a delay of x seconds. 
-    // }, 5000)
     const timer = setTimeout(() => {
-      if (prompt < 4) {
+      if (prompt < constants.prompts.length) {
         // When the time is up, increment the prompt state variable.
         setPrompt(prompt + 1);
         // alert(`Moving on to the next prompt!`);
       }
-      // Change this number to make the alert trigger after a delay of x seconds. 
-    }, 20000);
-    return () => {
+      // Time length of prompt
+    }, constants.prompts[prompt-1].pTime);
+      return () => {
       clearTimeout(timer);
       // clearTimeout(warning);
     };
@@ -96,7 +61,7 @@ function App() {
 
 
   useEffect(()=> {
-    if (prompt >= 4) {
+    if (prompt >= constants.prompts.length) {
       // After the last prompt, signal the parent frame to run jatos.endStudyAndRedirect,
       // Which will redirect the user to Prolific's page and end the study.
       // The code logic for the redirect can be found in ./redirect.html. 
@@ -310,7 +275,7 @@ function App() {
       </div>
       <div className="prompt">
         {/* Display the prompt based on which prompt you're on: */}
-        <div style={{margin: "50px"}}>{prompts[prompt - 1]}</div>
+        <div style={{margin: "50px"}}>{constants.prompts[prompt - 1].pText}</div>
       </div>
     </div>
   );
